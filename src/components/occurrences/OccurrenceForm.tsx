@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, MapPin } from 'lucide-react';
+import { Loader2, MapPin, Map } from 'lucide-react';
 import { 
   Organization, 
   OccurrenceType, 
@@ -24,6 +24,7 @@ import {
   priorityLabels 
 } from '@/types/sigor';
 import { z } from 'zod';
+import { LocationPickerMap } from '@/components/map/LocationPickerMap';
 
 const occurrenceSchema = z.object({
   organization_id: z.string().min(1, 'Selecione uma organização'),
@@ -49,6 +50,7 @@ export function OccurrenceForm({ onSuccess }: OccurrenceFormProps) {
   const [loading, setLoading] = useState(false);
   const [organizations, setOrganizations] = useState<Organization[]>([]);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [showMapPicker, setShowMapPicker] = useState(false);
   
   const [formData, setFormData] = useState({
     organization_id: profile?.organization_id || '',
@@ -138,7 +140,28 @@ export function OccurrenceForm({ onSuccess }: OccurrenceFormProps) {
     }
   };
 
+  const handleMapLocationSelect = (lat: number, lng: number, address?: string) => {
+    setFormData(prev => ({ 
+      ...prev, 
+      latitude: lat, 
+      longitude: lng,
+      location_address: address || prev.location_address
+    }));
+    setShowMapPicker(false);
+  };
+
   return (
+    <>
+      {showMapPicker && (
+        <LocationPickerMap
+          initialPosition={formData.latitude && formData.longitude 
+            ? { lat: formData.latitude, lng: formData.longitude } 
+            : null
+          }
+          onLocationSelect={handleMapLocationSelect}
+          onClose={() => setShowMapPicker(false)}
+        />
+      )}
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Organization */}
@@ -287,22 +310,29 @@ export function OccurrenceForm({ onSuccess }: OccurrenceFormProps) {
         {/* GPS Capture */}
         <div className="space-y-2">
           <Label>Coordenadas GPS</Label>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                getCurrentPosition();
-              }}
+              onClick={getCurrentPosition}
               disabled={gpsLoading}
               className="flex items-center gap-2"
             >
               <MapPin className="h-4 w-4" />
-              {gpsLoading ? 'Obtendo localização...' : 'Capturar GPS'}
+              {gpsLoading ? 'Obtendo...' : 'Minha Localização'}
             </Button>
-            {(formData.latitude || latitude) && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowMapPicker(true)}
+              className="flex items-center gap-2"
+            >
+              <Map className="h-4 w-4" />
+              Marcar no Mapa
+            </Button>
+            {formData.latitude && formData.longitude && (
               <span className="text-sm text-muted-foreground">
-                {(formData.latitude || latitude)?.toFixed(6)}, {(formData.longitude || longitude)?.toFixed(6)}
+                {formData.latitude.toFixed(6)}, {formData.longitude.toFixed(6)}
               </span>
             )}
           </div>
@@ -319,5 +349,6 @@ export function OccurrenceForm({ onSuccess }: OccurrenceFormProps) {
         </Button>
       </div>
     </form>
+    </>
   );
 }
