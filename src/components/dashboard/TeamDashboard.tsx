@@ -18,6 +18,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { statusLabels, priorityLabels } from '@/types/sigor';
 import { useToast } from '@/hooks/use-toast';
+import { VehicleCrewPanel } from '@/components/vehicles/VehicleCrewPanel';
 
 interface TeamDispatch {
   id: string;
@@ -210,6 +211,9 @@ export function TeamDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Vehicle Crew Panel */}
+      <VehicleCrewPanel />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
